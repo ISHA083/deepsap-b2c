@@ -374,6 +374,9 @@
             <p class="text-[14px] text-slate-500 mt-3 max-w-xl leading-relaxed">
               Stop looking like another CV in the pile. One shareable profile, built from the reports you choose. Share it with any recruiter or HR, keep it role-specific and pick your role, done in a minute, or tailor it to a JD for a stronger match.
             </p>
+            <p class="text-[12.5px] text-accent-700 mt-2 max-w-xl leading-relaxed italic">
+              Takes about a minute if you've already run Resume Intelligence, Culture Fit, and Tech Fit for the same role/JD, or about 20 minutes total if you're starting fresh.
+            </p>
 
             <div class="mt-5">
               <div class="text-[12px] font-semibold text-slate-500 mb-2.5">Included in your link, optional, choose when you build it:</div>
@@ -444,7 +447,7 @@
               Build a shareable profile from the reports you choose.
             </p>
           </div>
-          <button type="button" onclick="showScreen('new-profile'); npReset();" class="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-white bg-accent-600 hover:bg-accent-700 px-4 py-2.5 rounded-lg transition-colors shrink-0">
+          <button type="button" onclick="npOpenSchemaModal()" class="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-white bg-accent-600 hover:bg-accent-700 px-4 py-2.5 rounded-lg transition-colors shrink-0">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
@@ -594,6 +597,45 @@
             </div>
           </div>
 
+          <!-- Readiness checklist: appears once a role is confirmed -->
+          <div id="npReadinessBlock" class="hidden mt-5 pt-5 border-t border-slate-100">
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Readiness for <span id="npReadinessRoleLabel"></span></p>
+            <p id="npReadinessMessage" class="text-[13px] text-slate-600 mt-1.5 leading-relaxed"></p>
+
+            <div class="mt-3 space-y-2">
+              <div id="npReadiness-resume" class="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-slate-200">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="npr-icon shrink-0"></span>
+                  <span class="text-[13px] text-slate-700 truncate">Resume Intelligence <span class="text-slate-400 font-normal">(includes Role Fit)</span></span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="npr-status text-[12.5px]"></span>
+                  <button type="button" onclick="return false;" class="npr-run-link text-[12.5px] font-semibold text-accent-600 hover:text-accent-700">Run →</button>
+                </div>
+              </div>
+              <div id="npReadiness-culture" class="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-slate-200">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="npr-icon shrink-0"></span>
+                  <span class="text-[13px] text-slate-700 truncate">Culture Fit Intelligence</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="npr-status text-[12.5px]"></span>
+                  <button type="button" onclick="return false;" class="npr-run-link text-[12.5px] font-semibold text-accent-600 hover:text-accent-700">Run →</button>
+                </div>
+              </div>
+              <div id="npReadiness-techfit" class="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-slate-200">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="npr-icon shrink-0"></span>
+                  <span class="text-[13px] text-slate-700 truncate">AI Tech Fit Intelligence</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="npr-status text-[12.5px]"></span>
+                  <button type="button" onclick="return false;" class="npr-run-link text-[12.5px] font-semibold text-accent-600 hover:text-accent-700">Run →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- JD-specific: paste / upload / voice tabs -->
           <div id="np-jd-fields" class="mt-6 hidden">
             <label class="block text-[12.5px] font-semibold text-slate-600 mb-1.5">Job description</label>
@@ -605,12 +647,12 @@
             </div>
 
             <div id="np-jd-panel-paste" class="np-jd-panel">
-              <textarea rows="5" placeholder="Paste the job description here..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[14px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400 resize-none"></textarea>
+              <textarea id="npJdPasteInput" rows="5" placeholder="Paste the job description here..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[14px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400 resize-none"></textarea>
             </div>
 
             <div id="np-jd-panel-upload" class="np-jd-panel hidden">
               <label class="flex flex-col items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl py-9 cursor-pointer hover:border-accent-300 hover:bg-accent-50/30 transition-colors">
-                <input type="file" class="hidden" />
+                <input id="npJdUploadInput" type="file" class="hidden" onchange="npJdFileName = this.files[0] ? this.files[0].name : null" />
                 <div class="w-9 h-9 rounded-full bg-accent-50 flex items-center justify-center">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -624,19 +666,21 @@
 
             <div id="np-jd-panel-url" class="np-jd-panel hidden">
               <label class="block text-[12px] text-slate-500 mb-1.5">Paste a link to the job posting</label>
-              <input type="text" placeholder="https://www.linkedin.com/jobs/view/..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[14px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400" />
+              <input id="npJdUrlInput" type="text" placeholder="https://www.linkedin.com/jobs/view/..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[14px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400" />
               <p class="text-[11.5px] text-slate-400 mt-1.5">Works with LinkedIn, Naukri, or most company career pages.</p>
             </div>
 
             <div class="mt-4">
               <label class="block text-[12.5px] font-semibold text-slate-600 mb-1.5">Client / company <span class="font-normal text-slate-400">(optional)</span></label>
-              <input type="text" placeholder="Client X" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[14px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400" />
+              <input id="npJdClientInput" type="text" placeholder="Client X" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[14px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400" />
             </div>
           </div>
 
+          <p id="npStep1Error" class="hidden mt-3 text-[12.5px] text-red-600">Please enter a role to continue.</p>
+
           <div class="mt-7 flex items-center justify-between">
             <button type="button" onclick="showScreen('deepsap-profile');" class="text-[13.5px] font-semibold text-slate-500 hover:text-slate-700 px-3 py-2">Cancel</button>
-            <button type="button" onclick="npGoStep('step2')" class="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-white bg-accent-600 hover:bg-accent-700 px-4 py-2.5 rounded-lg transition-colors">
+            <button type="button" onclick="npValidateStep1AndContinue()" class="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-white bg-accent-600 hover:bg-accent-700 px-4 py-2.5 rounded-lg transition-colors">
               Continue
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -649,102 +693,250 @@
         <div id="np-step2" class="np-step hidden">
           <div class="text-[12px] font-semibold text-accent-600 uppercase tracking-wide">Step 2 of 3</div>
           <h2 class="text-[22px] font-semibold text-slate-800 tracking-tight mt-1">Choose reports</h2>
-          <p class="text-[13.5px] text-slate-500 mt-1.5">Select what to include in this profile. You can update or add reports later from your profile.</p>
+          <p class="text-[13.5px] text-slate-500 mt-1.5">Select what to include in this profile. You can always add more later, your profile updates automatically, with your consent, the next time you run a report for the same role/JD.</p>
 
           <div class="mt-6 space-y-2.5">
 
-            <div class="np-report flex items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 bg-white">
-              <label class="flex items-start gap-3 cursor-pointer min-w-0">
-                <input type="checkbox" checked class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
-                <span class="min-w-0">
-                  <span class="block text-[14px] font-semibold text-slate-800">Resume Intelligence</span>
-                  <span class="flex items-center gap-1.5 text-[12.5px] text-slate-500 mt-1">
-                    Use previous
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 9l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span class="text-slate-400">·</span> SAP EWM Lead, 91% ATS
-                    <span class="text-[10.5px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">Matches this role</span>
+            <div class="np-report p-4 rounded-xl border border-slate-200 bg-white relative">
+              <div class="flex items-center justify-between gap-3">
+                <label class="flex items-start gap-3 cursor-pointer min-w-0">
+                  <input type="checkbox" class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
+                  <span class="min-w-0">
+                    <span class="block text-[14px] font-semibold text-slate-800">Resume Intelligence</span>
+                    <button type="button" onclick="npToggleResumePicker(event)" class="flex items-center gap-1.5 text-[12.5px] text-slate-600 hover:text-accent-600 mt-1">
+                      <span id="npResumeSelectedLabel">Select a report</span>
+                      <svg id="npResumePickerChevron" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform shrink-0"><path d="M7 9l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
                   </span>
-                </span>
-              </label>
-              <button type="button" onclick="return false;" class="shrink-0 text-[12.5px] font-semibold text-accent-600 hover:text-accent-700 whitespace-nowrap">Run new →</button>
+                </label>
+              </div>
+
+              <div class="mt-2.5 ml-7 flex items-start gap-1.5 text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 mt-0.5"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4.5M12 16v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span>No report found for the exact role/JD. <button type="button" onclick="return false;" class="font-semibold underline hover:no-underline">Run Resume Intelligence</button>, takes only 5–10 mins.</span>
+              </div>
+
+              <!-- Report picker dropdown -->
+              <div id="npResumePickerDropdown" class="hidden mt-3 pt-3 border-t border-slate-100">
+                <input type="text" id="npResumePickerSearch" oninput="npFilterResumeRuns()" placeholder="Search your Resume Intelligence runs..." class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400" />
+                <div id="npResumeRunsList" class="mt-2.5 space-y-1.5 max-h-52 overflow-y-auto">
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="ibm sap tm consultant enhanced">
+                    <input type="radio" name="npResumeRun" class="mt-0.5 accent-accent-600" onchange="npSelectResumeRun(this, 'SAP TM Consultant Resume Check · IBM · 92%')" />
+                    <span class="min-w-0">
+                      <span class="block text-[13px] font-medium text-slate-800">SAP TM Consultant Resume Check · IBM</span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Aug 9, 2026 · Score: 92% <span class="text-emerald-600 font-medium">· Enhanced</span></span>
+                    </span>
+                  </label>
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="deloitte sap tm consultant verified">
+                    <input type="radio" name="npResumeRun" class="mt-0.5 accent-accent-600" onchange="npSelectResumeRun(this, 'SAP TM Consultant Resume Check · Deloitte · 94%')" />
+                    <span class="min-w-0">
+                      <span class="block text-[13px] font-medium text-slate-800">SAP TM Consultant Resume Check · Deloitte</span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Aug 3, 2026 · Score: 94% <span class="text-slate-500 font-medium">· Verified</span></span>
+                    </span>
+                  </label>
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="tcs sap tm consultant caught early">
+                    <input type="radio" name="npResumeRun" class="mt-0.5 accent-accent-600" onchange="npSelectResumeRun(this, 'SAP TM Consultant Resume Check · TCS · 68%')" />
+                    <span class="min-w-0">
+                      <span class="block text-[13px] font-medium text-slate-800">SAP TM Consultant Resume Check · TCS</span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Jul 30, 2026 · Score: 68% <span class="text-slate-500 font-medium">· Caught Early</span></span>
+                    </span>
+                  </label>
+
+                </div>
+                <p id="npResumeRunsEmpty" class="hidden text-[12.5px] text-slate-400 text-center py-3">No matching runs found</p>
+              </div>
+            </div>
+
+            <div class="np-report p-4 rounded-xl border border-slate-200 bg-white relative">
+              <div class="flex items-center justify-between gap-3">
+                <label class="flex items-start gap-3 cursor-pointer min-w-0">
+                  <input type="checkbox" class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
+                  <span class="min-w-0">
+                    <span class="block text-[14px] font-semibold text-slate-800">Role Fit Report</span>
+                    <button type="button" onclick="npTogglePicker(event, 'rolefit')" class="flex items-center gap-1.5 text-[12.5px] text-slate-600 hover:text-accent-600 mt-1">
+                      <span id="np-rolefit-selected-label">Select a report</span>
+                      <svg id="np-rolefit-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform shrink-0"><path d="M7 9l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </span>
+                </label>
+              </div>
+
+              <div class="mt-2.5 ml-7 flex items-start gap-1.5 text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 mt-0.5"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4.5M12 16v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span>No report found for the exact role/JD. Role Fit is generated together with Resume Intelligence, so run that and this will be included too. <button type="button" onclick="return false;" class="font-semibold underline hover:no-underline">Run Resume Intelligence</button>, takes only 5–10 mins.</span>
+              </div>
+
+              <div id="np-rolefit-dropdown" class="hidden mt-3 pt-3 border-t border-slate-100">
+                <input type="text" id="np-rolefit-search" oninput="npFilterPicker('rolefit')" placeholder="Search your Role Fit runs..." class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400" />
+                <div id="np-rolefit-list" class="mt-2.5 space-y-1.5 max-h-52 overflow-y-auto">
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="ibm sap tm consultant enhanced">
+                    <input type="radio" name="np-rolefit-run" class="mt-0.5 accent-accent-600" onchange="npSelectPicker('rolefit', this, 'SAP TM Consultant Resume Check · IBM · 92% fit')" />
+                    <span class="min-w-0">
+                      <span class="block text-[13px] font-medium text-slate-800">SAP TM Consultant Resume Check · IBM</span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Aug 9, 2026 · 92% fit</span>
+                    </span>
+                  </label>
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="deloitte sap tm consultant verified">
+                    <input type="radio" name="np-rolefit-run" class="mt-0.5 accent-accent-600" onchange="npSelectPicker('rolefit', this, 'SAP TM Consultant Resume Check · Deloitte · 94% fit')" />
+                    <span class="min-w-0">
+                      <span class="block text-[13px] font-medium text-slate-800">SAP TM Consultant Resume Check · Deloitte</span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Aug 3, 2026 · 94% fit</span>
+                    </span>
+                  </label>
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="tcs sap tm consultant caught early">
+                    <input type="radio" name="np-rolefit-run" class="mt-0.5 accent-accent-600" onchange="npSelectPicker('rolefit', this, 'SAP TM Consultant Resume Check · TCS · 68% fit')" />
+                    <span class="min-w-0">
+                      <span class="block text-[13px] font-medium text-slate-800">SAP TM Consultant Resume Check · TCS</span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Jul 30, 2026 · 68% fit</span>
+                    </span>
+                  </label>
+
+                </div>
+                <p id="np-rolefit-empty" class="hidden text-[12.5px] text-slate-400 text-center py-3">No matching runs found</p>
+              </div>
+            </div>
+
+            <div class="np-report p-4 rounded-xl border border-slate-200 bg-white relative">
+              <div class="flex items-center justify-between gap-3">
+                <label class="flex items-start gap-3 cursor-pointer min-w-0">
+                  <input type="checkbox" checked class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
+                  <span class="min-w-0">
+                    <span class="block text-[14px] font-semibold text-slate-800">Sentiment Analysis</span>
+                    <button type="button" onclick="npTogglePicker(event, 'sentiment')" class="flex items-center gap-1.5 text-[12.5px] text-slate-600 hover:text-accent-600 mt-1">
+                      <span id="np-sentiment-selected-label">SAP EWM Fit Check · 82%</span>
+                      <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">Matches this role</span>
+                      <svg id="np-sentiment-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform shrink-0"><path d="M7 9l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </span>
+                </label>
+              </div>
+
+              <div id="np-sentiment-dropdown" class="hidden mt-3 pt-3 border-t border-slate-100">
+                <input type="text" id="np-sentiment-search" oninput="npFilterPicker('sentiment')" placeholder="Search your Culture Fit Intelligence runs..." class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400" />
+                <div id="np-sentiment-list" class="mt-2.5 space-y-1.5 max-h-52 overflow-y-auto">
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="sap ewm fit check client x">
+                    <input type="radio" name="np-sentiment-run" checked class="mt-0.5 accent-accent-600" onchange="npSelectPicker('sentiment', this, 'SAP EWM Fit Check · 82%')" />
+                    <span class="min-w-0">
+                      <span class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-[13px] font-medium text-slate-800">SAP EWM Fit Check · Client X</span>
+                        <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">Matches this role</span>
+                      </span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Aug 9, 2026 · Fit score 82%</span>
+                    </span>
+                  </label>
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="generic hr round">
+                    <input type="radio" name="np-sentiment-run" class="mt-0.5 accent-accent-600" onchange="npSelectPicker('sentiment', this, 'Generic HR Round · 76%')" />
+                    <span class="min-w-0">
+                      <span class="block text-[13px] font-medium text-slate-800">Generic HR Round</span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Aug 3, 2026 · Fit score 76%</span>
+                    </span>
+                  </label>
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="mm consultant fit client y">
+                    <input type="radio" name="np-sentiment-run" class="mt-0.5 accent-accent-600" onchange="npSelectPicker('sentiment', this, 'MM Consultant Fit · 68%')" />
+                    <span class="min-w-0">
+                      <span class="block text-[13px] font-medium text-slate-800">MM Consultant Fit · Client Y</span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Jul 28, 2026 · Fit score 68%</span>
+                    </span>
+                  </label>
+
+                </div>
+                <p id="np-sentiment-empty" class="hidden text-[12.5px] text-slate-400 text-center py-3">No matching runs found</p>
+              </div>
+            </div>
+
+            <div class="np-report p-4 rounded-xl border border-slate-200 bg-white relative">
+              <div class="flex items-center justify-between gap-3">
+                <label class="flex items-start gap-3 cursor-pointer min-w-0">
+                  <input type="checkbox" checked class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
+                  <span class="min-w-0">
+                    <span class="block text-[14px] font-semibold text-slate-800">AI Tech Fit Intelligence</span>
+                    <button type="button" onclick="npTogglePicker(event, 'techfit')" class="flex items-center gap-1.5 text-[12.5px] text-slate-600 hover:text-accent-600 mt-1">
+                      <span id="np-techfit-selected-label">SAP EWM Technical Round · 85%</span>
+                      <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">Matches this role</span>
+                      <svg id="np-techfit-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform shrink-0"><path d="M7 9l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </span>
+                </label>
+              </div>
+
+              <div id="np-techfit-dropdown" class="hidden mt-3 pt-3 border-t border-slate-100">
+                <input type="text" id="np-techfit-search" oninput="npFilterPicker('techfit')" placeholder="Search your AI Tech Fit Intelligence runs..." class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400" />
+                <div id="np-techfit-list" class="mt-2.5 space-y-1.5 max-h-52 overflow-y-auto">
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="sap ewm technical round client x">
+                    <input type="radio" name="np-techfit-run" checked class="mt-0.5 accent-accent-600" onchange="npSelectPicker('techfit', this, 'SAP EWM Technical Round · 85%')" />
+                    <span class="min-w-0">
+                      <span class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-[13px] font-medium text-slate-800">SAP EWM Technical Round · Client X</span>
+                        <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">Matches this role</span>
+                      </span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Aug 8, 2026 · Technical score 85%</span>
+                    </span>
+                  </label>
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="generic tech interview">
+                    <input type="radio" name="np-techfit-run" class="mt-0.5 accent-accent-600" onchange="npSelectPicker('techfit', this, 'Generic Tech Interview · 79%')" />
+                    <span class="min-w-0">
+                      <span class="block text-[13px] font-medium text-slate-800">Generic Tech Interview</span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Aug 3, 2026 · Technical score 79%</span>
+                    </span>
+                  </label>
+
+                  <label class="npc-run-option flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer" data-search="mm consultant deep dive client y">
+                    <input type="radio" name="np-techfit-run" class="mt-0.5 accent-accent-600" onchange="npSelectPicker('techfit', this, 'MM Consultant Deep Dive · 64%')" />
+                    <span class="min-w-0">
+                      <span class="block text-[13px] font-medium text-slate-800">MM Consultant Deep Dive · Client Y</span>
+                      <span class="block text-[12px] text-slate-500 mt-0.5">Jul 25, 2026 · Technical score 64%</span>
+                    </span>
+                  </label>
+
+                </div>
+                <p id="np-techfit-empty" class="hidden text-[12.5px] text-slate-400 text-center py-3">No matching runs found</p>
+              </div>
             </div>
 
             <div class="np-report flex items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 bg-white">
               <label class="flex items-start gap-3 cursor-pointer min-w-0">
-                <input id="npPublicSourcesCheck" type="checkbox" disabled class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
-                <span class="min-w-0">
-                  <span class="block text-[14px] font-semibold text-slate-800">Resume + Public Sources</span>
-                  <span id="npPublicSourcesStatus" class="flex items-center gap-1.5 text-[12.5px] text-amber-600 mt-1">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0"><path d="M12 8.5v4.5M12 16.2v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/></svg>
-                    Link a public source to enable this report
-                  </span>
-                </span>
-              </label>
-              <button type="button" id="npPublicSourcesBtn" onclick="npToggleSourceLink()" class="shrink-0 text-[12.5px] font-semibold text-accent-600 hover:text-accent-700 whitespace-nowrap">+ Link source →</button>
-            </div>
-
-            <div class="np-report flex items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 bg-white">
-              <label class="flex items-start gap-3 cursor-pointer min-w-0">
-                <input type="checkbox" checked class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
-                <span class="min-w-0">
-                  <span class="block text-[14px] font-semibold text-slate-800">Role Fit Report</span>
-                  <span class="flex items-center gap-1.5 text-[12.5px] text-slate-500 mt-1">
-                    Use previous
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 9l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span class="text-slate-400">·</span> SAP EWM Lead, 88% fit
-                    <span class="text-[10.5px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">Matches this role</span>
-                  </span>
-                </span>
-              </label>
-              <button type="button" onclick="return false;" class="shrink-0 text-[12.5px] font-semibold text-accent-600 hover:text-accent-700 whitespace-nowrap">Run new →</button>
-            </div>
-
-            <div class="np-report flex items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 bg-white">
-              <label class="flex items-start gap-3 cursor-pointer min-w-0">
-                <input type="checkbox" class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
+                <input id="npVideoCheck" type="checkbox" class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
                 <span class="min-w-0">
                   <span class="block text-[14px] font-semibold text-slate-800">Video Profile</span>
-                  <span class="block text-[12.5px] text-slate-400 mt-1">No video uploaded yet</span>
+                  <span id="npVideoStatus" class="block text-[12.5px] text-slate-400 mt-1">No video uploaded yet</span>
                 </span>
               </label>
-              <button type="button" onclick="return false;" class="shrink-0 text-[12.5px] font-semibold text-accent-600 hover:text-accent-700 whitespace-nowrap">Upload →</button>
+              <button type="button" onclick="npOpenVideoModal()" class="shrink-0 text-[12.5px] font-semibold text-accent-600 hover:text-accent-700 whitespace-nowrap">Upload →</button>
             </div>
 
             <div class="np-report flex items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 bg-white">
               <label class="flex items-start gap-3 cursor-pointer min-w-0">
-                <input type="checkbox" checked class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
-                <span class="min-w-0">
-                  <span class="block text-[14px] font-semibold text-slate-800">Sentiment Analysis</span>
-                  <span class="flex items-center gap-1.5 text-[12.5px] text-slate-500 mt-1">
-                    Use previous
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 9l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span class="text-slate-400">·</span> Generic run, Aug 5
-                  </span>
-                </span>
-              </label>
-              <button type="button" onclick="return false;" class="shrink-0 text-[12.5px] font-semibold text-accent-600 hover:text-accent-700 whitespace-nowrap">Run new →</button>
-            </div>
-
-            <div class="np-report flex items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 bg-white">
-              <label class="flex items-start gap-3 cursor-pointer min-w-0">
-                <input type="checkbox" class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
-                <span class="min-w-0">
-                  <span class="block text-[14px] font-semibold text-slate-800">AI Tech Fit Intelligence</span>
-                  <span class="block text-[12.5px] text-slate-400 mt-1">No previous run yet</span>
-                </span>
-              </label>
-              <button type="button" onclick="return false;" class="shrink-0 text-[12.5px] font-semibold text-accent-600 hover:text-accent-700 whitespace-nowrap">Start interview →</button>
-            </div>
-
-            <div class="np-report flex items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 bg-white">
-              <label class="flex items-start gap-3 cursor-pointer min-w-0">
-                <input type="checkbox" class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
+                <input id="npCertCheck" type="checkbox" class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
                 <span class="min-w-0">
                   <span class="block text-[14px] font-semibold text-slate-800">Certifications / Public Assessments</span>
-                  <span class="block text-[12.5px] text-slate-400 mt-1">None linked yet</span>
+                  <span id="npCertStatus" class="block text-[12.5px] text-slate-400 mt-1">None linked yet</span>
                 </span>
               </label>
-              <button type="button" onclick="return false;" class="shrink-0 text-[12.5px] font-semibold text-accent-600 hover:text-accent-700 whitespace-nowrap">Add →</button>
+              <button type="button" onclick="npOpenCertModal()" class="shrink-0 text-[12.5px] font-semibold text-accent-600 hover:text-accent-700 whitespace-nowrap">Add →</button>
+            </div>
+
+            <div class="np-report flex items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+              <label class="flex items-start gap-3 cursor-not-allowed min-w-0">
+                <input type="checkbox" disabled class="np-report-check mt-1 shrink-0 w-4 h-4 rounded accent-accent-600" />
+                <span class="min-w-0">
+                  <span class="flex items-center gap-2 flex-wrap">
+                    <span class="text-[14px] font-semibold text-slate-400">Resume + Public Sources</span>
+                    <span class="text-[9.5px] font-bold uppercase tracking-wide text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-full whitespace-nowrap">Coming Soon</span>
+                  </span>
+                  <span class="block text-[12.5px] text-slate-400 mt-1">Enrich your resume with LinkedIn and other public sources</span>
+                </span>
+              </label>
             </div>
 
           </div>
@@ -767,7 +959,7 @@
 
           <div class="mt-6 max-w-md">
             <label class="block text-[12.5px] font-semibold text-slate-600 mb-1.5">Profile name</label>
-            <input id="npProfileName" type="text" value="SAP EWM Lead · Client X" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[14px] text-slate-800 focus:outline-none focus:border-accent-400" />
+            <input id="npProfileName" type="text" value="SAP EWM Lead · Client X" oninput="npProfileNameManuallyEdited = true" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-[14px] text-slate-800 focus:outline-none focus:border-accent-400" />
           </div>
 
           <div class="mt-6">
@@ -816,7 +1008,7 @@
           <p class="text-[13.5px] text-slate-500 mt-1.5">Your shareable link is ready.</p>
 
           <div class="mt-5 inline-flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 max-w-full">
-            <span id="npGeneratedLink" class="text-[13px] text-slate-700 font-medium truncate">deepsap.io/p/abhijith-ewm-clientx</span>
+            <span id="npGeneratedLink" class="text-[13px] text-slate-700 font-medium truncate">deepsap.io/p/isha-ewm-clientx</span>
             <button type="button" onclick="npCopyLink(event)" class="shrink-0 text-[12.5px] font-semibold text-accent-600 hover:text-accent-700 whitespace-nowrap">Copy link</button>
           </div>
 
@@ -3566,6 +3758,150 @@
   </div>
 </div>
 
+<!-- DEEPSAP PROFILE SCHEMA SELECTION MODAL -->
+<div id="npSchemaOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4">
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="npCloseSchemaModal()"></div>
+  <div class="relative bg-white w-full max-w-[460px] rounded-2xl shadow-2xl p-7">
+    <div class="flex items-start justify-between gap-4">
+      <h3 class="text-[17px] font-semibold text-slate-800">Build My DeepSAP Profile</h3>
+      <button type="button" onclick="npCloseSchemaModal()" class="text-slate-400 hover:text-slate-600 shrink-0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p class="text-[13px] text-slate-500 mt-1.5">How should your profile be structured?</p>
+
+    <div class="mt-5 space-y-3">
+      <label class="np-schema-option flex items-start gap-3 p-4 rounded-xl border border-accent-500 bg-accent-50 cursor-pointer">
+        <input type="radio" name="npSchema" value="deepsap" checked class="np-schema-radio mt-1 shrink-0 accent-accent-600" onchange="npUpdateSchemaVisual()" />
+        <span>
+          <span class="block text-[14.5px] font-semibold text-slate-800">DeepSAP Profile</span>
+          <span class="block text-[13px] text-slate-500 mt-0.5">Uses SAP's own framework, Modules, WRICEF, Business Process, Integration. Built for SAP-focused roles and specialist recruiters.</span>
+        </span>
+      </label>
+      <label class="np-schema-option flex items-start gap-3 p-4 rounded-xl border border-slate-200 cursor-pointer hover:border-accent-300 bg-white">
+        <input type="radio" name="npSchema" value="agnostic" class="np-schema-radio mt-1 shrink-0 accent-accent-600" onchange="npUpdateSchemaVisual()" />
+        <span>
+          <span class="block text-[14.5px] font-semibold text-slate-800">Role-Agnostic Profile</span>
+          <span class="block text-[13px] text-slate-500 mt-0.5">A general, universally structured format. Built for a wider job search and broader hiring audiences.</span>
+        </span>
+      </label>
+    </div>
+
+    <div class="mt-6 flex items-center justify-end gap-3">
+      <button type="button" onclick="npCloseSchemaModal()" class="text-[13.5px] font-semibold text-slate-500 hover:text-slate-700 px-3 py-2">Cancel</button>
+      <button type="button" onclick="npConfirmSchemaAndStart()" class="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-white bg-accent-600 hover:bg-accent-700 px-4 py-2.5 rounded-lg transition-colors">
+        Continue
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- VIDEO PROFILE MODAL -->
+<div id="npVideoOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4">
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="npCloseVideoModal()"></div>
+  <div class="relative bg-white w-full max-w-[480px] rounded-2xl shadow-2xl p-7 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-start justify-between gap-4">
+      <h3 class="text-[17px] font-semibold text-slate-800">Record Your Video Profile</h3>
+      <button type="button" onclick="npCloseVideoModal()" class="text-slate-400 hover:text-slate-600 shrink-0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <p class="text-[13px] text-slate-500 mt-2 leading-relaxed">A short video helps recruiters see the person behind the resume. Cover these briefly, then upload your recording below:</p>
+
+    <ul class="mt-3.5 space-y-2">
+      <li class="flex items-start gap-2 text-[13px] text-slate-700">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 mt-0.5 text-accent-600"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        A brief introduction, who you are
+      </li>
+      <li class="flex items-start gap-2 text-[13px] text-slate-700">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 mt-0.5 text-accent-600"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Your SAP career so far
+      </li>
+      <li class="flex items-start gap-2 text-[13px] text-slate-700">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 mt-0.5 text-accent-600"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Key skills and modules you specialize in
+      </li>
+      <li class="flex items-start gap-2 text-[13px] text-slate-700">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 mt-0.5 text-accent-600"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        What kind of role you're looking for next
+      </li>
+    </ul>
+
+    <p class="text-[12px] text-slate-400 mt-3">Aim for 1–2 minutes. Record separately on your phone or laptop, then upload the file here.</p>
+
+    <div class="mt-4">
+      <label class="flex flex-col items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl py-8 cursor-pointer hover:border-accent-300 hover:bg-accent-50/30 transition-colors">
+        <input type="file" accept="video/*" class="hidden" onchange="npSetVideoFile(this.files[0] ? this.files[0].name : 'Video file')" />
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="npVideoFileLabel" class="text-[13px] font-medium text-slate-600">Click to upload, or drag and drop</span>
+        <span class="text-[11.5px] text-slate-400">MP4 or MOV, up to 200MB</span>
+      </label>
+    </div>
+
+    <div class="mt-4 flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 mt-0.5 text-slate-400"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4.5M12 16v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <p class="text-[12px] text-slate-500 leading-relaxed">We personally review every video to keep your profile credible, usually within 3 working days. Once confirmed, it'll appear on your DeepSAP profile link.</p>
+    </div>
+
+    <div class="mt-6 flex items-center justify-end gap-3">
+      <button type="button" onclick="npCloseVideoModal()" class="text-[13.5px] font-semibold text-slate-500 hover:text-slate-700 px-3 py-2">Cancel</button>
+      <button type="button" onclick="npSubmitVideo()" class="text-[13.5px] font-semibold text-white bg-accent-600 hover:bg-accent-700 px-4 py-2.5 rounded-lg transition-colors">Submit for Review</button>
+    </div>
+  </div>
+</div>
+
+<!-- CERTIFICATIONS / PUBLIC ASSESSMENTS MODAL -->
+<div id="npCertOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4">
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="npCloseCertModal()"></div>
+  <div class="relative bg-white w-full max-w-[460px] rounded-2xl shadow-2xl p-7 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-start justify-between gap-4">
+      <h3 class="text-[17px] font-semibold text-slate-800">Certifications &amp; Public Assessments</h3>
+      <button type="button" onclick="npCloseCertModal()" class="text-slate-400 hover:text-slate-600 shrink-0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <p class="text-[13px] text-slate-500 mt-2 leading-relaxed">Upload certificates or paste verification links, add as many as you have. We'll verify each one and compile them into your Certifications Report.</p>
+
+    <div class="mt-4 flex items-center gap-1 border-b border-slate-200 mb-3">
+      <button type="button" onclick="npSwitchCertTab('file')" data-certtab="file" class="npcert-tab px-3 py-1.5 text-[12.5px] font-semibold border-b-2 -mb-px transition-colors border-accent-600 text-accent-700">Upload File</button>
+      <button type="button" onclick="npSwitchCertTab('link')" data-certtab="link" class="npcert-tab px-3 py-1.5 text-[12.5px] font-semibold border-b-2 -mb-px transition-colors border-transparent text-slate-500">Paste Link</button>
+    </div>
+
+    <div id="npCertPanel-file" class="npcert-panel">
+      <label class="flex flex-col items-center justify-center gap-1.5 border border-dashed border-slate-300 rounded-lg py-7 cursor-pointer hover:border-accent-300 hover:bg-accent-50/30 transition-colors">
+        <input type="file" class="hidden" onchange="npAddCertEntry(this.files[0] ? this.files[0].name : 'Certificate file')" />
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="text-[12.5px] font-medium text-slate-600">Click to upload, or drag and drop</span>
+        <span class="text-[11px] text-slate-400">PDF, JPG, or PNG · Add as many as you like</span>
+      </label>
+    </div>
+
+    <div id="npCertPanel-link" class="npcert-panel hidden">
+      <div class="flex items-center gap-2">
+        <input type="text" id="npCertLinkInput" placeholder="https://coursera.org/verify/..." class="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-accent-400" />
+        <button type="button" onclick="npAddCertLink()" class="text-[12.5px] font-semibold text-white bg-accent-600 hover:bg-accent-700 px-3 py-2 rounded-lg whitespace-nowrap">Add</button>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-1.5">Works with Coursera, LinkedIn, Credly, or most verification pages. Add as many links as you like.</p>
+    </div>
+
+    <div id="npCertEntriesList" class="mt-3 space-y-1.5"></div>
+
+    <div class="mt-4 flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 mt-0.5 text-slate-400"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4.5M12 16v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <p class="text-[12px] text-slate-500 leading-relaxed">We personally verify every certification to keep your profile credible, usually within 3 working days, then compile them into your Certifications Report.</p>
+    </div>
+
+    <div class="mt-6 flex items-center justify-end gap-3">
+      <button type="button" onclick="npCloseCertModal()" class="text-[13.5px] font-semibold text-white bg-accent-600 hover:bg-accent-700 px-4 py-2.5 rounded-lg transition-colors">Done</button>
+    </div>
+  </div>
+</div>
+
 <!-- PRACTICE SESSION MODAL -->
 <div id="practiceOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4">
   <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="practiceCloseModal()"></div>
@@ -3837,16 +4173,6 @@
   });
 
   // ---- New Profile wizard ----
-  const npReportLabels = {
-    0: 'Resume Intelligence',
-    1: 'Resume + Public Sources',
-    2: 'Role Fit Report',
-    3: 'Video Profile',
-    4: 'Sentiment Analysis',
-    5: 'AI Tech Fit Intelligence',
-    6: 'Certifications / Public Assessments'
-  };
-
   const npStepNumbers = { 'step1': 1, 'step2': 2, 'step3': 3, 'step4': null };
 
   function npGoStep(stepId) {
@@ -3888,6 +4214,61 @@
     });
   }
 
+  let npJdFileName = null;
+  let npProfileNameManuallyEdited = false;
+
+  function npSyncProfileName() {
+    if (npProfileNameManuallyEdited) return;
+    const isJD = document.querySelector('input[name="npType"]:checked').value === 'jd';
+    let suggested;
+    if (!isJD) {
+      suggested = document.getElementById('npRoleInput').value.trim();
+    } else {
+      const client = document.getElementById('npJdClientInput').value.trim();
+      suggested = client !== '' ? client + ' JD Profile' : 'JD-Specific Profile';
+    }
+    if (suggested !== '') {
+      document.getElementById('npProfileName').value = suggested;
+    }
+  }
+
+  function npValidateStep1AndContinue() {
+    const errorEl = document.getElementById('npStep1Error');
+    const isJD = document.querySelector('input[name="npType"]:checked').value === 'jd';
+    let valid = true;
+    let message = '';
+
+    if (!isJD) {
+      const role = document.getElementById('npRoleInput').value.trim();
+      if (role === '') {
+        valid = false;
+        message = 'Please enter a role to continue.';
+      }
+    } else {
+      const activeTab = document.querySelector('.np-jdtab.text-accent-700').getAttribute('data-jdtab');
+      if (activeTab === 'paste' && document.getElementById('npJdPasteInput').value.trim() === '') {
+        valid = false;
+        message = 'Please paste a job description to continue.';
+      } else if (activeTab === 'url' && document.getElementById('npJdUrlInput').value.trim() === '') {
+        valid = false;
+        message = 'Please paste a job posting link to continue.';
+      } else if (activeTab === 'upload' && !npJdFileName) {
+        valid = false;
+        message = 'Please upload a job description file to continue.';
+      }
+    }
+
+    if (!valid) {
+      errorEl.textContent = message;
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    errorEl.classList.add('hidden');
+    npSyncProfileName();
+    npGoStep('step2');
+  }
+
   function npUpdateTypeVisual() {
     document.querySelectorAll('.np-option').forEach(opt => {
       const radio = opt.querySelector('.np-radio');
@@ -3899,6 +4280,9 @@
     const isJD = document.querySelector('input[name="npType"]:checked').value === 'jd';
     document.getElementById('np-generic-fields').classList.toggle('hidden', isJD);
     document.getElementById('np-jd-fields').classList.toggle('hidden', !isJD);
+    if (isJD) {
+      document.getElementById('npReadinessBlock').classList.add('hidden');
+    }
   }
 
   function npBackFromStep2() {
@@ -3909,30 +4293,97 @@
   const npSourcePool = ['LinkedIn', 'GitHub', 'Portfolio'];
   let npLinkedSources = [];
 
-  function npToggleSourceLink() {
-    const check = document.getElementById('npPublicSourcesCheck');
-    const status = document.getElementById('npPublicSourcesStatus');
-    const btn = document.getElementById('npPublicSourcesBtn');
-
-    if (npLinkedSources.length < npSourcePool.length) {
-      npLinkedSources.push(npSourcePool[npLinkedSources.length]);
-    }
-
-    check.disabled = false;
-    check.checked = true;
-    status.classList.remove('text-amber-600');
-    status.classList.add('text-slate-500');
-    status.innerHTML = 'Linked: ' + npLinkedSources.join(', ') + ' <span class="text-slate-400">·</span> Enriched from Resume Intelligence';
-
-    if (npLinkedSources.length >= npSourcePool.length) {
-      btn.textContent = 'All sources linked';
-      btn.disabled = true;
-      btn.classList.add('text-slate-300', 'cursor-not-allowed');
-      btn.classList.remove('text-accent-600', 'hover:text-accent-700');
-    } else {
-      btn.textContent = '+ Add another →';
+  function npToggleResumePicker(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropdown = document.getElementById('npResumePickerDropdown');
+    const chevron = document.getElementById('npResumePickerChevron');
+    dropdown.classList.toggle('hidden');
+    chevron.classList.toggle('rotate-180');
+    if (!dropdown.classList.contains('hidden')) {
+      document.getElementById('npResumePickerSearch').focus();
     }
   }
+
+  function npSelectResumeRun(radio, label) {
+    document.getElementById('npResumeSelectedLabel').textContent = label;
+    document.getElementById('npResumePickerDropdown').classList.add('hidden');
+    document.getElementById('npResumePickerChevron').classList.remove('rotate-180');
+    const card = radio.closest('.np-report');
+    card.querySelector('.np-report-check').checked = true;
+    const warning = card.querySelector('.bg-amber-50');
+    if (warning) warning.classList.add('hidden');
+  }
+
+  function npFilterResumeRuns() {
+    const q = document.getElementById('npResumePickerSearch').value.trim().toLowerCase();
+    const options = document.querySelectorAll('#npResumeRunsList .npc-run-option');
+    let visibleCount = 0;
+    options.forEach(opt => {
+      const match = opt.getAttribute('data-search').includes(q);
+      opt.classList.toggle('hidden', !match);
+      if (match) visibleCount++;
+    });
+    document.getElementById('npResumeRunsEmpty').classList.toggle('hidden', visibleCount > 0);
+  }
+
+  document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('npResumePickerDropdown');
+    const trigger = e.target.closest('button[onclick*="npToggleResumePicker"]');
+    if (dropdown && !dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && !trigger) {
+      dropdown.classList.add('hidden');
+      document.getElementById('npResumePickerChevron').classList.remove('rotate-180');
+    }
+  });
+
+  // ---- Generic report picker (Role Fit Report, Sentiment Analysis, AI Tech Fit Intelligence) ----
+  function npTogglePicker(e, key) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropdown = document.getElementById('np-' + key + '-dropdown');
+    const chevron = document.getElementById('np-' + key + '-chevron');
+    dropdown.classList.toggle('hidden');
+    chevron.classList.toggle('rotate-180');
+    if (!dropdown.classList.contains('hidden')) {
+      document.getElementById('np-' + key + '-search').focus();
+    }
+  }
+
+  function npSelectPicker(key, radio, label) {
+    document.getElementById('np-' + key + '-selected-label').textContent = label;
+    document.getElementById('np-' + key + '-dropdown').classList.add('hidden');
+    document.getElementById('np-' + key + '-chevron').classList.remove('rotate-180');
+    const card = radio.closest('.np-report');
+    card.querySelector('.np-report-check').checked = true;
+    const warning = card.querySelector('.bg-amber-50');
+    if (warning) warning.classList.add('hidden');
+  }
+
+  function npFilterPicker(key) {
+    const q = document.getElementById('np-' + key + '-search').value.trim().toLowerCase();
+    const options = document.querySelectorAll('#np-' + key + '-list .npc-run-option');
+    let visibleCount = 0;
+    options.forEach(opt => {
+      const match = opt.getAttribute('data-search').includes(q);
+      opt.classList.toggle('hidden', !match);
+      if (match) visibleCount++;
+    });
+    document.getElementById('np-' + key + '-empty').classList.toggle('hidden', visibleCount > 0);
+  }
+
+  document.addEventListener('click', (e) => {
+    ['rolefit', 'sentiment', 'techfit'].forEach(key => {
+      const dropdown = document.getElementById('np-' + key + '-dropdown');
+      if (!dropdown) return;
+      const trigger = e.target.closest('button[onclick*="npTogglePicker"][onclick*="' + key + '"]');
+      if (!dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && !trigger) {
+        dropdown.classList.add('hidden');
+        document.getElementById('np-' + key + '-chevron').classList.remove('rotate-180');
+      }
+    });
+  });
+
+
 
   // ---- Role combobox (generic path) ----
   const npRoles = [
@@ -3968,6 +4419,59 @@
   function npSelectRole(role) {
     document.getElementById('npRoleInput').value = role;
     document.getElementById('npRoleSuggestions').classList.add('hidden');
+    npShowReadinessChecklist(role);
+  }
+
+  // ---- Readiness checklist: role required, client/company not needed on this path ----
+  const npReadinessMap = {
+    'sap ewm lead': { resume: false, culture: true, techfit: true }
+  };
+
+  function npShowReadinessChecklist(role) {
+    const key = role.trim().toLowerCase();
+    const data = npReadinessMap[key] || { resume: false, culture: false, techfit: false };
+    const items = [
+      { key: 'resume', label: 'Resume Intelligence', ready: data.resume },
+      { key: 'culture', label: 'Culture Fit Intelligence', ready: data.culture },
+      { key: 'techfit', label: 'AI Tech Fit Intelligence', ready: data.techfit }
+    ];
+    const readyCount = items.filter(i => i.ready).length;
+
+    let message;
+    if (readyCount === 3) {
+      message = "All 3 are ready for this role. This'll build fast.";
+    } else if (readyCount === 0) {
+      message = "Nothing's ready yet for this role. We recommend completing Resume Intelligence first, it covers Role Fit too and takes about 10 minutes. You can always add the rest later.";
+    } else {
+      const missing = items.filter(i => !i.ready).map(i => i.label);
+      const missingText = missing.join(' and ');
+      const verb = missing.length > 1 ? "aren't" : "isn't";
+      const pronoun = missing.length > 1 ? 'them' : 'it';
+      message = readyCount + ' of 3 ready for this role. ' + missingText + ' ' + verb + ' done yet, that\'s fine, add ' + pronoun + ' now or later.';
+    }
+
+    document.getElementById('npReadinessRoleLabel').textContent = role;
+    document.getElementById('npReadinessMessage').textContent = message;
+
+    items.forEach(item => {
+      const row = document.getElementById('npReadiness-' + item.key);
+      const icon = row.querySelector('.npr-icon');
+      const status = row.querySelector('.npr-status');
+      const runLink = row.querySelector('.npr-run-link');
+      if (item.ready) {
+        icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" fill="#10B981"/><path d="M8 12.3l2.6 2.6L16.5 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        status.textContent = 'Done';
+        status.className = 'npr-status text-[12.5px] font-semibold text-emerald-600';
+        runLink.classList.add('hidden');
+      } else {
+        icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="#CBD5E1" stroke-width="1.8"/></svg>';
+        status.textContent = 'Not yet';
+        status.className = 'npr-status text-[12.5px] font-medium text-slate-400';
+        runLink.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('npReadinessBlock').classList.remove('hidden');
   }
 
   document.addEventListener('click', (e) => {
@@ -3992,13 +4496,18 @@
   }
 
   function npPublish() {
-    // Build included reports list from checked report checkboxes
+    // Build included reports list from checked report checkboxes.
+    // Reads each label directly from its row in the DOM, not a hardcoded index,
+    // so it can never drift out of sync if rows are reordered again.
     const checks = document.querySelectorAll('.np-report-check');
     const included = document.getElementById('npIncludedReports');
     let html = '';
-    checks.forEach((c, i) => {
+    checks.forEach((c) => {
       if (c.checked) {
-        html += '<span class="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-accent-700 bg-accent-50 border border-accent-200 px-3 py-1.5 rounded-full">' + npReportLabels[i] + '</span>';
+        const row = c.closest('.np-report');
+        const titleEl = row ? row.querySelector('label span.text-\\[14px\\]') : null;
+        const label = titleEl ? titleEl.textContent.trim() : 'Report';
+        html += '<span class="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-accent-700 bg-accent-50 border border-accent-200 px-3 py-1.5 rounded-full">' + label + '</span>';
       }
     });
     included.innerHTML = html;
@@ -4016,29 +4525,157 @@
     setTimeout(() => { btn.textContent = original; }, 1500);
   }
 
+  // ---- DeepSAP Profile schema selection: backend-only choice, no UI changes downstream ----
+  let npSelectedSchema = 'deepsap';
+
+  function npOpenSchemaModal() {
+    document.getElementById('npSchemaOverlay').classList.remove('hidden');
+  }
+
+  function npCloseSchemaModal() {
+    document.getElementById('npSchemaOverlay').classList.add('hidden');
+  }
+
+  function npUpdateSchemaVisual() {
+    document.querySelectorAll('.np-schema-option').forEach(opt => {
+      const radio = opt.querySelector('.np-schema-radio');
+      opt.classList.toggle('border-accent-500', radio.checked);
+      opt.classList.toggle('bg-accent-50', radio.checked);
+      opt.classList.toggle('border-slate-200', !radio.checked);
+    });
+  }
+
+  function npConfirmSchemaAndStart() {
+    npSelectedSchema = document.querySelector('input[name="npSchema"]:checked').value;
+    npCloseSchemaModal();
+    showScreen('new-profile');
+    npReset();
+  }
+
   function npReset() {
     document.querySelector('input[name="npType"][value="generic"]').checked = true;
     npUpdateTypeVisual();
     document.getElementById('npRoleInput').value = '';
     document.getElementById('npRoleSuggestions').classList.add('hidden');
+    document.getElementById('npReadinessBlock').classList.add('hidden');
+    document.getElementById('npStep1Error').classList.add('hidden');
+    document.getElementById('npJdPasteInput').value = '';
+    document.getElementById('npJdUrlInput').value = '';
+    document.getElementById('npJdClientInput').value = '';
+    npJdFileName = null;
+    npProfileNameManuallyEdited = false;
+    document.getElementById('npProfileName').value = 'SAP EWM Lead · Client X';
     npSwitchJDTab('paste');
 
-    // Reset Resume + Public Sources link state
+    // Resume + Public Sources is Coming Soon (disabled), nothing to reset
     npLinkedSources = [];
-    const check = document.getElementById('npPublicSourcesCheck');
-    const status = document.getElementById('npPublicSourcesStatus');
-    const btn = document.getElementById('npPublicSourcesBtn');
-    check.disabled = true;
-    check.checked = false;
-    status.classList.add('text-amber-600');
-    status.classList.remove('text-slate-500');
-    status.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0"><path d="M12 8.5v4.5M12 16.2v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/></svg> Link a public source to enable this report';
-    btn.textContent = '+ Link source →';
-    btn.disabled = false;
-    btn.classList.remove('text-slate-300', 'cursor-not-allowed');
-    btn.classList.add('text-accent-600', 'hover:text-accent-700');
+
+    // Reset Certifications / Public Assessments
+    npCertEntries = [];
+    document.getElementById('npCertEntriesList').innerHTML = '';
+    document.getElementById('npCertCheck').checked = false;
+    document.getElementById('npCertStatus').textContent = 'None linked yet';
+    document.getElementById('npCertOverlay').classList.add('hidden');
+    npSwitchCertTab('file');
+
+    // Reset Video Profile
+    npVideoFileName = null;
+    document.getElementById('npVideoCheck').checked = false;
+    document.getElementById('npVideoStatus').textContent = 'No video uploaded yet';
+    document.getElementById('npVideoFileLabel').textContent = 'Click to upload, or drag and drop';
+    document.getElementById('npVideoOverlay').classList.add('hidden');
 
     npGoStep('step1');
+  }
+
+  // ---- Certifications / Public Assessments: minimal input only, extraction happens server-side ----
+  let npCertEntries = [];
+
+  function npOpenCertModal() {
+    document.getElementById('npCertOverlay').classList.remove('hidden');
+  }
+
+  function npCloseCertModal() {
+    document.getElementById('npCertOverlay').classList.add('hidden');
+  }
+
+  function npSwitchCertTab(tab) {
+    document.querySelectorAll('.npcert-panel').forEach(p => p.classList.add('hidden'));
+    document.getElementById('npCertPanel-' + tab).classList.remove('hidden');
+    document.querySelectorAll('.npcert-tab').forEach(btn => {
+      const active = btn.getAttribute('data-certtab') === tab;
+      btn.classList.toggle('border-accent-600', active);
+      btn.classList.toggle('text-accent-700', active);
+      btn.classList.toggle('border-transparent', !active);
+      btn.classList.toggle('text-slate-500', !active);
+    });
+  }
+
+  function npRenderCertEntries() {
+    const list = document.getElementById('npCertEntriesList');
+    list.innerHTML = npCertEntries.map((entry, i) =>
+      '<div class="flex items-center justify-between gap-2 text-[12.5px] text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">' +
+        '<span class="truncate">' + entry + '</span>' +
+        '<button type="button" onclick="npRemoveCertEntry(' + i + ')" class="shrink-0 text-slate-400 hover:text-red-500">' +
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+        '</button>' +
+      '</div>'
+    ).join('');
+
+    const check = document.getElementById('npCertCheck');
+    const status = document.getElementById('npCertStatus');
+    if (npCertEntries.length > 0) {
+      check.checked = true;
+      status.textContent = npCertEntries.length + ' ' + (npCertEntries.length === 1 ? 'item' : 'items') + ' added';
+    } else {
+      check.checked = false;
+      status.textContent = 'None linked yet';
+    }
+  }
+
+  function npAddCertEntry(name) {
+    npCertEntries.push(name);
+    npRenderCertEntries();
+  }
+
+  function npAddCertLink() {
+    const input = document.getElementById('npCertLinkInput');
+    const value = input.value.trim();
+    if (value === '') return;
+    npCertEntries.push(value);
+    input.value = '';
+    npRenderCertEntries();
+  }
+
+  function npRemoveCertEntry(index) {
+    npCertEntries.splice(index, 1);
+    npRenderCertEntries();
+  }
+
+  // ---- Video Profile: requirements + upload modal ----
+  let npVideoFileName = null;
+
+  function npOpenVideoModal() {
+    document.getElementById('npVideoOverlay').classList.remove('hidden');
+  }
+
+  function npCloseVideoModal() {
+    document.getElementById('npVideoOverlay').classList.add('hidden');
+  }
+
+  function npSetVideoFile(name) {
+    npVideoFileName = name;
+    document.getElementById('npVideoFileLabel').textContent = name;
+  }
+
+  function npSubmitVideo() {
+    if (!npVideoFileName) {
+      npCloseVideoModal();
+      return;
+    }
+    document.getElementById('npVideoCheck').checked = true;
+    document.getElementById('npVideoStatus').textContent = 'Submitted for review · Pending verification';
+    npCloseVideoModal();
   }
 
   // ---- AI Culture Fit Intelligence: inline session rename ----
